@@ -1,6 +1,7 @@
 
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
+import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
 import {MyERC20Token, MyERC20Token__factory, TokenSale} from "../typechain-types"
 import { token } from "../typechain-types/@openzeppelin/contracts";
@@ -63,17 +64,31 @@ describe("NFT Shop", async () => {
   });
 
   describe("When a user burns an ERC20 at the Token contract", async () => {
+    const paymentAmount = ethers.utils.parseEther("1")
+    let balanceBeforeBuyTokens : BigNumber
+    let gasFeesBuyTokens : BigNumber
     beforeEach(async () => {
-      const buyTokensTx = await tokenSaleContract.connect(acc1).buyTokens()
-      await buyTokensTx.wait()
-
+      balanceBeforeBuyTokens = await acc1.getBalance() // We can pass a block tag as an argument 
+      console.log(balanceBeforeBuyTokens)
+      const buyTokensTx = await tokenSaleContract.connect(acc1).buyTokens({value : paymentAmount}) // Here we declare the payment that we are passing
+      const buyTokenReceipt = await buyTokensTx.wait()
+      gasFeesBuyTokens = (buyTokenReceipt.gasUsed).mul(buyTokenReceipt.effectiveGasPrice)
     })
     it("gives the correct amount of ETH", async () => {
-      throw new Error("Not implemented");
+      const balanceAfterBuyTokens = await acc1.getBalance()
+      const diff = balanceBeforeBuyTokens.sub(balanceAfterBuyTokens)
+      const expectedcost = paymentAmount.add(gasFeesBuyTokens)
+      expect(diff).to.equal(expectedcost)
+
     });
 
+    it("Increase the token balance " , async () => {
+      const balanceContract = await ethers.provider.getBalance(tokenSaleContract.address)
+      expect(balanceContract).to.eq(paymentAmount)
+    })
+
     it("burns the correct amount of tokens", async () => {
-      throw new Error("Not implemented");
+      
     });
   });
 
