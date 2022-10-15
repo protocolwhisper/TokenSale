@@ -20,4 +20,9 @@ contract TokenSale {
         uint256 amountToBeGiven = paymentReceived / ratio; // This problem is about rounding  , There's no floats
         paymentToken.mint(msg.sender, amountToBeGiven);
     }
+
+    function burnTokens(uint256 amount) public {
+        // Patter pull over Push Pattern
+        paymentToken.transferFrom(msg.sender, address(this), amount);
+    }
 }
